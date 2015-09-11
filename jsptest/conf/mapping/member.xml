@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap      
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"      
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="member">
+
+	<typeAlias alias="memberVo" type="vo.tbVO"/>
+	<sql id="selectAll">
+
+	</sql>
+	
+
+	<!-- Map<String, String> params = new HashMa<String, String>();
+	     params.put("mem_id", "a001");
+	     params.put("mem_pass", "asdfasdf")
+	-->
+    <select id="memberInfo" parameterClass="map" resultClass="memberVo">
+    
+    </select>	
+    
+    <select id="selectAllTb" parameterClass="map" resultClass="memberVo">
+	  
+	   SELECT * FROM TESTBOARD,
+		(SELECT COUNT(B.ROWNO), MAX(TB_SEQ) MX, MIN(TB_SEQ) MN FROM
+		(SELECT ROWNUM ROWNO, TB_SEQ
+		FROM
+		     (SELECT ROWNUM , T.* FROM TESTBOARD T ORDER BY TB_SEQ) A
+		WHERE MOD(TB_SEQ,1)=0
+		ORDER BY TB_SEQ) B
+		WHERE B.ROWNO &lt; #start#
+		  AND B.ROWNO &gt; #end#) D
+		WHERE TB_SEQ &lt; D.MX+1
+		  AND TB_SEQ &gt; D.MN-1
+		ORDER BY TB_SEQ DESC
+
+    </select>
+    
+    
+    <insert id="insertTb" parameterClass="memberVo" >
+    	INSERT INTO TESTBOARD(
+    				 TB_SEQ,
+    				 TB_WRITER,
+    				 TB_PASS,
+    				 TB_TITLE,
+    				 TB_CONTENT,
+    				 COUNT,
+    				 TB_DATE)
+    		VALUES(
+    			   TB_SEQ.NEXTVAL,
+    			   #tb_writer#,
+    			   #tb_pass#,
+    			   #tb_title#,
+    			   #tb_content#,
+    			   0,
+    			   SYSDATE
+    		)
+    		
+    	<selectKey resultClass="string">
+    		SELECT TB_WRITER
+    		FROM TESTBOARD
+    		WHERE TB_WRITER = #tb_seq#
+    	</selectKey>
+    </insert>
+    
+
+    <insert id="insertComent" parameterClass="memberVo" >
+    	INSERT INTO TESTBOARD(
+    				 TB_SEQ,
+    				 TB_WRITER,
+    				 TB_PASS,
+    				 TB_TITLE,
+    				 TB_CONTENT,
+    				 TB_DATE)
+    		VALUES(
+    			   
+				   (select max(tb_seq) from TESTBOARD where tb_seq = #tb_seq# or tb_seq &lt; (#tb_seq#+1))+0.001,
+    			   #tb_writer#,
+    			   #tb_pass#,
+    			   #tb_seq#,
+    			   #tb_content#,
+    			   SYSDATE
+    		)
+    		
+    	<selectKey resultClass="string">
+    		SELECT TB_WRITER
+    		FROM TESTBOARD
+    		WHERE TB_WRITER = #tb_seq#
+    	</selectKey>
+    </insert>
+    
+    
+	<update id="updatetb" parameterClass="memberVo">
+		UPDATE TESTBOARD
+		SET TB_TITLE = #tb_title#
+		   ,TB_CONTENT = #tb_content#
+		WHERE TB_WRITER = #tb_writer#
+		  AND TB_PASS = #tb_pass#
+		  AND TB_SEQ = #tb_seq#
+	</update>
+	
+	<select id="checkpass" parameterClass="map" resultClass="string">
+		SELECT 'RIGHT' FROM TESTBOARD
+		WHERE TB_SEQ = #tb_seq#
+		  AND TB_PASS = #tb_pass#
+	</select>
+	<delete id="deletetb" parameterClass="map">
+		DELETE FROM TESTBOARD
+		WHERE  TB_SEQ &lt; #tb_seq#+1
+		  AND  TB_SEQ &gt; #tb_seq#
+		   OR  TB_SEQ = #tb_seq#
+	</delete>
+	<delete id="deletecoment" parameterClass="map">
+		DELETE FROM TESTBOARD
+		WHERE  TB_SEQ = #tb_seq#
+		  AND  TB_PASS = #tb_pass#
+	</delete>
+	
+	<select id="selectone" parameterClass="string" resultClass="memberVo">
+		SELECT * FROM TESTBOARD
+		WHERE TB_SEQ = #tb_seq#
+	</select>
+    
+     <select id="selectSearch" resultClass="memberVo">
+    	SELECT * FROM TESTBOARD
+    	WHERE TB_SEQ IS NOT NULL
+    	AND TB_TITLE LIKE('%'||#search_val#||'%')
+    	ORDER BY TB_SEQ DESC
+    </select>
+    
+    <select id="counttotal" resultClass="string">
+    	SELECT COUNT(TB_SEQ)
+    	  FROM TESTBOARD
+    	 WHERE MOD(TB_SEQ,1)=0 
+    </select>
+    
+    
+</sqlMap>
